@@ -1,22 +1,19 @@
-
-import regex
+import re
 import pandas as pd
-import numpy as np
-import emoji
 from collections import Counter
 import matplotlib.pyplot as plt
 from wordcloud import WordCloud, STOPWORDS, ImageColorGenerator
 
 def date_time(s):
-    pattern = '^([0-9]+)(\/)([0-9]+)(\/)([0-9]+), ([0-9]+):([0-9]+)[ ]?(AM|PM|am|pm)? -'
-    result = regex.match(pattern, s)
+    pattern = r'^([0-9]+)\/([0-9]+)\/([0-9]+), ([0-9]+):([0-9]+)\s?(AM|PM|am|pm)? -'
+    result = re.match(pattern, s)
     if result:
         return True
     return False
 
 def find_author(s):
     s = s.split(":")
-    if len(s)==2:
+    if len(s) == 2:
         return True
     else:
         return False
@@ -31,29 +28,35 @@ def getDatapoint(line):
         author = splitmessage[0]
         message = " ".join(splitmessage[1:])
     else:
-        author= None
+        author = None
     return date, time, author, message
+
 data = []
-conversation = 'WhatsApp Chat with Vaibhav Bajaj.txt'
+conversation = 'WhatsApp Chat with +91 6205 889 432.txt'
 with open(conversation, encoding="utf-8") as fp:
     fp.readline()
     messageBuffer = []
     date, time, author = None, None, None
+    
     while True:
         line = fp.readline()
         if not line:
             break
         line = line.strip()
         if date_time(line):
-            if len(messageBuffer) > 0:
+            date, time, author, message = getDatapoint(line)
+            if messageBuffer:
                 data.append([date, time, author, ' '.join(messageBuffer)])
             messageBuffer.clear()
-            date, time, author, message = getDatapoint(line)
             messageBuffer.append(message)
         else:
             messageBuffer.append(line)
+
+if messageBuffer:  # Append the remaining messages
+    data.append([date, time, author, ' '.join(messageBuffer)])
+
 df = pd.DataFrame(data, columns=["Date", 'Time', 'Author', 'Message'])
 df['Date'] = pd.to_datetime(df['Date'])
-print(df.tail(20))
-print(df.info())
-print(df.Author.unique())
+
+# Now you can work with the DataFrame (df) as needed
+print(df)
